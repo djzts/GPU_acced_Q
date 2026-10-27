@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="zh-CN" data-lang="zh">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GPU_acced_Q · 安装指南 / Installation</title>
+<meta name="description" content="GPU 加速的 QUBO / Ising 优化（Simulated Bifurcation + PyTorch CUDA）安装指南 · Installation guide for GPU-accelerated QUBO / Ising optimization with Simulated Bifurcation and PyTorch CUDA.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2376b900'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='700' text-anchor='middle' fill='white'%3EQ%3C/text%3E%3C/svg%3E">
+<style>
+  :root {
+    --bg: #f7f8f5;
+    --surface: #ffffff;
+    --surface-2: #eef1ea;
+    --text: #1b1f1a;
+    --muted: #5c6459;
+    --border: #dde2d7;
+    --accent: #4f7d00;
+    --accent-soft: #e6f0d4;
+    --code-bg: #161a14;
+    --code-text: #e6ebe1;
+    --code-muted: #8d9887;
+    --warn-bg: #fff6e0;
+    --warn-border: #e8c46a;
+    --radius: 10px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f120e;
+      --surface: #171b15;
+      --surface-2: #1f251c;
+      --text: #e4e9df;
+      --muted: #9aa494;
+      --border: #2c3428;
+      --accent: #8fd11a;
+      --accent-soft: #24301a;
+      --code-bg: #0a0c09;
+      --code-text: #e6ebe1;
+      --code-muted: #7b8676;
+      --warn-bg: #2a2412;
+      --warn-border: #7a6526;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f120e;
+    --surface: #171b15;
+    --surface-2: #1f251c;
+    --text: #e4e9df;
+    --muted: #9aa494;
+    --border: #2c3428;
+    --accent: #8fd11a;
+    --accent-soft: #24301a;
+    --code-bg: #0a0c09;
+    --code-text: #e6ebe1;
+    --code-muted: #7b8676;
+    --warn-bg: #2a2412;
+    --warn-border: #7a6526;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 16px/1.7 var(--sans);
+  }
+
+  /* language switching: hide whichever language is not active */
+  html[data-lang="zh"] [lang="en"]:not(html),
+  html[data-lang="en"] [lang="zh"]:not(html) { display: none !important; }
+
+  a { color: var(--accent); text-underline-offset: 2px; }
+  code { font-family: var(--mono); font-size: .9em; background: var(--surface-2); padding: .1em .35em; border-radius: 4px; }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 16px; }
+
+  header.top {
+    position: sticky; top: 0; z-index: 10;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border);
+  }
+  header.top .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; gap: 12px; }
+  .brand { font-family: var(--mono); font-weight: 700; color: var(--text); text-decoration: none; white-space: nowrap; }
+  .brand span { color: var(--accent); }
+  .top-right { display: flex; align-items: center; gap: 10px; }
+  .gh { color: var(--muted); font-size: 14px; text-decoration: none; white-space: nowrap; }
+  .gh:hover { color: var(--text); }
+
+  .lang-switch { display: inline-flex; border: 1px solid var(--border); border-radius: 999px; padding: 2px; background: var(--surface); }
+  .lang-switch button {
+    border: 0; background: transparent; color: var(--muted);
+    font: 600 13px/1 var(--sans); padding: 7px 12px; border-radius: 999px; cursor: pointer;
+  }
+  .lang-switch button[aria-pressed="true"] { background: var(--accent); color: #fff; }
+  :root[data-theme="dark"] .lang-switch button[aria-pressed="true"] { color: #0f120e; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .lang-switch button[aria-pressed="true"] { color: #0f120e; }
+  }
+
+  .hero { padding: 56px 0 32px; }
+  .eyebrow { font: 600 13px/1 var(--mono); color: var(--accent); letter-spacing: .04em; text-transform: uppercase; margin: 0 0 14px; }
+  .hero h1 { font-size: clamp(30px, 6vw, 44px); line-height: 1.15; margin: 0 0 16px; letter-spacing: -.01em; }
+  .hero p.lead { font-size: 18px; color: var(--muted); margin: 0 0 24px; max-width: 680px; }
+  .badges { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+  .badges li { font: 500 13px/1 var(--mono); padding: 7px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--border); color: var(--muted); }
+  .badges li b { color: var(--text); font-weight: 600; }
+
+  nav.toc { margin: 8px 0 8px; padding: 14px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); }
+  nav.toc ol { margin: 0; padding-left: 20px; columns: 2; column-gap: 32px; }
+  nav.toc li { break-inside: avoid; }
+  @media (max-width: 560px) { nav.toc ol { columns: 1; } }
+
+  section { padding: 36px 0 8px; }
+  h2 { font-size: 24px; line-height: 1.3; margin: 0 0 14px; scroll-margin-top: 72px; }
+  h3 { font-size: 18px; margin: 28px 0 8px; }
+  p { margin: 0 0 14px; }
+
+  .req { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
+  .req li { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+  .req li strong { display: block; font-size: 15px; margin-bottom: 2px; }
+  .req li span { color: var(--muted); font-size: 14px; }
+
+  ol.steps { list-style: none; counter-reset: step; margin: 0; padding: 0; }
+  ol.steps > li { counter-increment: step; position: relative; padding: 0 0 26px 52px; }
+  ol.steps > li::before {
+    content: counter(step);
+    position: absolute; left: 0; top: 0;
+    width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    font: 700 15px/34px var(--mono); text-align: center;
+  }
+  ol.steps > li:not(:last-child)::after {
+    content: ""; position: absolute; left: 16.5px; top: 40px; bottom: 6px; width: 1px; background: var(--border);
+  }
+  ol.steps h3 { margin: 4px 0 6px; }
+  .tag { display: inline-block; font: 600 11px/1 var(--sans); padding: 4px 7px; border-radius: 4px; background: var(--surface-2); color: var(--muted); vertical-align: 2px; margin-left: 6px; }
+
+  .code { position: relative; margin: 10px 0 14px; }
+  .code pre {
+    margin: 0; padding: 14px 16px; padding-right: 64px;
+    background: var(--code-bg); color: var(--code-text);
+    border-radius: 8px; overflow-x: auto;
+    font: 14px/1.6 var(--mono);
+  }
+  .code pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+  .code .c { color: var(--code-muted); }
+  .copy {
+    position: absolute; top: 8px; right: 8px;
+    border: 1px solid #3a4335; background: #22281f; color: #cfd8c9;
+    font: 600 12px/1 var(--sans); padding: 7px 9px; border-radius: 6px; cursor: pointer;
+  }
+  .copy:hover { background: #2c3428; }
+  .copy.done { color: #9be22d; border-color: #4f7d00; }
+
+  .output pre { background: var(--surface-2); color: var(--text); border: 1px dashed var(--border); }
+
+  .note { border-left: 3px solid var(--accent); background: var(--surface); border-radius: 0 8px 8px 0; padding: 12px 16px; margin: 12px 0 16px; font-size: 15px; }
+  .note.warn { border-left-color: var(--warn-border); background: var(--warn-bg); }
+  .note p:last-child { margin-bottom: 0; }
+
+  .math { font-family: "Cambria Math", "STIX Two Math", "Latin Modern Math", Georgia, serif; font-size: 19px; text-align: center; padding: 14px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); margin: 8px 0 16px; overflow-x: auto; }
+  .math i { font-style: italic; }
+  .math b { font-weight: 700; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 15px; margin: 8px 0 16px; }
+  th, td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  th { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .table-scroll { overflow-x: auto; }
+
+  details { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 0 16px; margin: 0 0 10px; }
+  details summary { cursor: pointer; font-weight: 600; padding: 13px 0; list-style-position: outside; }
+  details[open] summary { border-bottom: 1px solid var(--border); margin-bottom: 12px; }
+  details > *:last-child { margin-bottom: 14px; }
+
+  footer { margin-top: 48px; border-top: 1px solid var(--border); padding: 24px 0 40px; color: var(--muted); font-size: 14px; }
+  footer ul { list-style: none; padding: 0; margin: 0 0 10px; display: flex; flex-wrap: wrap; gap: 6px 18px; }
+
+  @media (max-width: 560px) {
+    body { font-size: 15px; }
+    .hero { padding-top: 36px; }
+    .hero p.lead { font-size: 16px; }
+    ol.steps > li { padding-left: 44px; }
+    .gh { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#">GPU_acced<span>_Q</span></a>
+    <div class="top-right">
+      <a class="gh" href="https://github.com/djzts/GPU_acced_Q">GitHub ↗</a>
+      <div class="lang-switch" role="group" aria-label="Language / 语言">
+        <button type="button" data-set-lang="zh" aria-pressed="true">中文</button>
+        <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <p class="eyebrow">Simulated Bifurcation · PyTorch · CUDA</p>
+    <h1>
+      <span lang="zh">用 GPU 加速求解 QUBO / Ising 问题</span>
+      <span lang="en">GPU-accelerated QUBO / Ising optimization</span>
+    </h1>
+    <p class="lead">
+      <span lang="zh">本项目基于 <a href="https://github.com/bqth29/simulated-bifurcation-algorithm">simulated-bifurcation</a> 和 PyTorch，在 NVIDIA GPU 上并行求解二次无约束二值优化（QUBO）与 Ising 模型。本页介绍如何从零搭建运行环境，并跑通第一个例子。</span>
+      <span lang="en">This project uses <a href="https://github.com/bqth29/simulated-bifurcation-algorithm">simulated-bifurcation</a> and PyTorch to solve Quadratic Unconstrained Binary Optimization (QUBO) and Ising problems in parallel on NVIDIA GPUs. This page walks you through setting up the environment from scratch and running your first example.</span>
+    </p>
+    <ul class="badges">
+      <li>Python <b>3.10</b></li>
+      <li>torch <b>2.6.0+cu118</b></li>
+      <li>simulated-bifurcation <b>1.2.0</b></li>
+      <li>CUDA <b>11.8</b></li>
+    </ul>
+  </section>
+
+  <nav class="toc" aria-label="Contents">
+    <ol>
+      <li><a href="#requirements"><span lang="zh">环境要求</span><span lang="en">Requirements</span></a></li>
+      <li><a href="#install"><span lang="zh">安装步骤</span><span lang="en">Installation</span></a></li>
+      <li><a href="#verify"><span lang="zh">验证安装</span><span lang="en">Verify the install</span></a></li>
+      <li><a href="#quickstart"><span lang="zh">快速上手</span><span lang="en">Quick start</span></a></li>
+      <li><a href="#files"><span lang="zh">仓库文件</span><span lang="en">Repository files</span></a></li>
+      <li><a href="#faq"><span lang="zh">常见问题</span><span lang="en">Troubleshooting</span></a></li>
+    </ol>
+  </nav>
+
+  <!-- ============================== REQUIREMENTS ============================== -->
+  <section id="requirements">
+    <h2><span lang="zh">环境要求</span><span lang="en">Requirements</span></h2>
+    <ul class="req">
+      <li>
+        <strong>Python 3.10</strong>
+        <span lang="zh">推荐用 Anaconda / Miniconda 创建独立环境。</span>
+        <span lang="en">An isolated Anaconda / Miniconda environment is recommended.</span>
+      </li>
+      <li>
+        <strong lang="zh">NVIDIA 显卡（可选）</strong>
+        <strong lang="en">NVIDIA GPU (optional)</strong>
+        <span lang="zh">驱动需支持 CUDA 11.8（版本 ≥ 520）。没有显卡也能用 CPU 运行。</span>
+        <span lang="en">Driver must support CUDA 11.8 (version ≥ 520). Without a GPU the code still runs on CPU.</span>
+      </li>
+      <li>
+        <strong lang="zh">操作系统</strong>
+        <strong lang="en">Operating system</strong>
+        <span lang="zh">Windows 或 Linux（已在 Windows + Anaconda 上测试）。</span>
+        <span lang="en">Windows or Linux (tested on Windows + Anaconda).</span>
+      </li>
+    </ul>
+    <div class="note">
+      <p lang="zh">PyTorch 的 <code>cu118</code> 安装包已经自带 CUDA 运行库，<strong>不需要</strong>另外安装 CUDA Toolkit，只要显卡驱动版本够新即可。</p>
+      <p lang="en">PyTorch's <code>cu118</code> wheels ship with the CUDA runtime, so you do <strong>not</strong> need to install the CUDA Toolkit separately — a recent enough GPU driver is all it takes.</p>
+    </div>
+  </section>
+
+  <!-- ============================== INSTALL ============================== -->
+  <section id="install">
+    <h2><span lang="zh">安装步骤</span><span lang="en">Installation</span></h2>
+
+    <ol class="steps">
+      <li>
+        <h3><span lang="zh">安装 Python 3.10</span><span lang="en">Install Python 3.10</span></h3>
+        <p lang="zh">用 conda 新建一个 Python 3.10 环境并激活：</p>
+        <p lang="en">Create and activate a Python 3.10 environment with conda:</p>
+        <div class="code"><pre><code>conda create -n gpu-q python=3.10 -y
+conda activate gpu-q</code></pre></div>
+        <p lang="zh">不用 conda 的话，也可以从 <a href="https://www.python.org/downloads/">python.org</a> 安装 Python 3.10，再用 <code>python -m venv .venv</code> 创建虚拟环境。</p>
+        <p lang="en">Not using conda? Install Python 3.10 from <a href="https://www.python.org/downloads/">python.org</a> and create a virtual environment with <code>python -m venv .venv</code>.</p>
+      </li>
+
+      <li>
+        <h3><span lang="zh">下载代码并安装依赖</span><span lang="en">Get the code and install dependencies</span></h3>
+        <div class="code"><pre><code>git clone https://github.com/djzts/GPU_acced_Q.git
+cd GPU_acced_Q
+pip install -r requirements.txt</code></pre></div>
+        <p lang="zh"><code>requirements.txt</code> 固定了 numpy、sympy、tqdm 等依赖的版本，其中的 <code>torch==2.2.0</code> 会在下一步被替换成 GPU 版本。</p>
+        <p lang="en"><code>requirements.txt</code> pins numpy, sympy, tqdm and other dependencies. The <code>torch==2.2.0</code> it installs is replaced by the GPU build in the next step.</p>
+      </li>
+
+      <li>
+        <h3><span lang="zh">安装 GPU 版 PyTorch</span><span lang="en">Install the GPU build of PyTorch</span><span class="tag" lang="zh">使用 GPU 时</span><span class="tag" lang="en">GPU only</span></h3>
+        <p lang="zh">想用 GPU 加速，请安装 <code>2.6.0+cu118</code>：</p>
+        <p lang="en">To use the GPU, install <code>2.6.0+cu118</code>:</p>
+        <div class="code"><pre><code>pip install torch==2.6.0 torchvision==0.21.0 torchaudio==2.6.0 --index-url https://download.pytorch.org/whl/cu118</code></pre></div>
+        <div class="note warn">
+          <p lang="zh">这一步必须放在第 2 步<strong>之后</strong>，否则 <code>requirements.txt</code> 会把 PyTorch 改回 2.2.0。只用 CPU 的话可以跳过这一步。</p>
+          <p lang="en">Run this <strong>after</strong> step 2, otherwise <code>requirements.txt</code> will downgrade PyTorch back to 2.2.0. Skip this step if you only use the CPU.</p>
+        </div>
+      </li>
+
+      <li>
+        <h3><span lang="zh">安装 simulated-bifurcation</span><span lang="en">Install simulated-bifurcation</span></h3>
+        <div class="code"><pre><code>pip install simulated-bifurcation==1.2.0</code></pre></div>
+        <p lang="zh">至此安装完成。</p>
+        <p lang="en">That's it — the installation is complete.</p>
+      </li>
+    </ol>
+
+    <div class="note">
+      <p lang="zh">在 Jupyter Notebook 里安装的话，可以直接打开仓库里的 <code>install package.ipynb</code> 依次运行。装完后请<strong>重启内核</strong>（Kernel → Restart），新版本的包才会生效。</p>
+      <p lang="en">Prefer Jupyter? Open <code>install package.ipynb</code> from the repository and run its cells in order. <strong>Restart the kernel</strong> afterwards (Kernel → Restart) so the newly installed packages are picked up.</p>
+    </div>
+  </section>
+
+  <!-- ============================== VERIFY ============================== -->
+  <section id="verify">
+    <h2><span lang="zh">验证安装</span><span lang="en">Verify the install</span></h2>
+    <p lang="zh">检查 PyTorch 版本和 GPU 是否可用：</p>
+    <p lang="en">Check the PyTorch version and whether the GPU is visible:</p>
+    <div class="code"><pre><code>python -c "import torch, simulated_bifurcation as sb; print(torch.__version__, torch.cuda.is_available())"</code></pre></div>
+    <p lang="zh">正常情况下会输出：</p>
+    <p lang="en">You should see:</p>
+    <div class="code output"><pre><code>2.6.0+cu118 True</code></pre></div>
+    <p lang="zh">如果输出的是 <code>False</code>，请看下方<a href="#faq">常见问题</a>。</p>
+    <p lang="en">If it prints <code>False</code>, see <a href="#faq">Troubleshooting</a> below.</p>
+  </section>
+
+  <!-- ============================== QUICK START ============================== -->
+  <section id="quickstart">
+    <h2><span lang="zh">快速上手</span><span lang="en">Quick start</span></h2>
+    <p lang="zh">simulated-bifurcation 求解的是如下形式的二次多项式的最小值或最大值：</p>
+    <p lang="en">simulated-bifurcation minimizes or maximizes quadratic polynomials of the form:</p>
+    <div class="math"><i>f</i>(<b>x</b>) = <b>x</b><sup>T</sup><i>Q</i><b>x</b> + <b>ℓ</b><sup>T</sup><b>x</b> + <i>c</i></div>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th><code>input_type</code></th>
+            <th><span lang="zh">变量取值</span><span lang="en">Variable domain</span></th>
+            <th><span lang="zh">对应问题</span><span lang="en">Problem type</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td><code>"binary"</code></td><td>{0, 1}</td><td>QUBO</td></tr>
+          <tr><td><code>"spin"</code></td><td>{−1, +1}</td><td><span lang="zh">Ising 模型</span><span lang="en">Ising model</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3><span lang="zh">例 1：在 GPU 上求解 QUBO</span><span lang="en">Example 1: solve a QUBO on the GPU</span></h3>
+    <div class="code"><pre><code>import torch
+import simulated_bifurcation as sb
+
+Q = torch.tensor([[1.0, -2.0],
+                  [0.0,  3.0]], dtype=torch.float32)
+
+<span class="c"># minimize x^T Q x with x in {0, 1}^2, running on the GPU</span>
+best_vector, best_val = sb.minimize(Q, input_type="binary", device="cuda")
+print("Best vector (binary domain):", best_vector)
+print("Best value:", best_val)</code></pre></div>
+    <div class="code output"><pre><code>Best vector (binary domain): tensor([0., 0.], device='cuda:0')
+Best value: 0.0</code></pre></div>
+    <p lang="zh">没有 GPU 时，把 <code>device="cuda"</code> 删掉（默认 CPU）或改成 <code>device="cpu"</code>。</p>
+    <p lang="en">No GPU? Remove <code>device="cuda"</code> (CPU is the default) or set <code>device="cpu"</code>.</p>
+
+    <h3><span lang="zh">例 2：Ising 模型</span><span lang="en">Example 2: Ising model</span></h3>
+    <div class="code"><pre><code>best_vector, best_val = sb.maximize(Q, input_type="spin")
+print("Best vector (spin domain):", best_vector)
+print("Best value:", best_val)</code></pre></div>
+    <div class="code output"><pre><code>Best vector (spin domain): tensor([ 1., -1.])
+Best value: 6.0</code></pre></div>
+    <p lang="zh">最优值是 6.0（<code>[1, -1]</code> 或 <code>[-1, 1]</code>）。这是启发式算法，偶尔会得到 2.0 这样的次优解，见<a href="#faq">常见问题</a>。</p>
+    <p lang="en">The optimum is 6.0 (<code>[1, -1]</code> or <code>[-1, 1]</code>). Because this is a heuristic, you may occasionally get a sub-optimal 2.0 — see <a href="#faq">Troubleshooting</a>.</p>
+
+    <h3><span lang="zh">例 3：带一次项和常数项，同时保留所有解</span><span lang="en">Example 3: linear and constant terms, keeping every solution</span></h3>
+    <p lang="zh">对于 <i>f</i>(x, y, z) = x² − y² + 2z² + xy − 2yz − x + 2z + 2，写成矩阵形式即：</p>
+    <p lang="en">For <i>f</i>(x, y, z) = x² − y² + 2z² + xy − 2yz − x + 2z + 2, the matrix form is:</p>
+    <div class="code"><pre><code>Q = torch.tensor([[1.0,  0.5,  0.0],
+                  [0.5, -1.0, -1.0],
+                  [0.0, -1.0,  2.0]], dtype=torch.float32)
+l = torch.tensor([-1.0, 0.0, 2.0], dtype=torch.float32)
+c = 2.0
+
+poly_model = sb.build_model(Q, vector=l, constant=c, input_type="binary")
+
+<span class="c"># run 64 agents in parallel and return all of their results</span>
+all_vectors, all_values = poly_model.minimize(agents=64, best_only=False)
+print("All solutions shape:", all_vectors.shape)
+print("All evaluations shape:", all_values.shape)</code></pre></div>
+    <div class="code output"><pre><code>All solutions shape: torch.Size([64, 3])
+All evaluations shape: torch.Size([64])</code></pre></div>
+    <p lang="zh">完整代码见仓库中的 <code>Example.py</code>（运行 <code>python Example.py</code>），更详细的推导见 <code>SB user book.ipynb</code>。</p>
+    <p lang="en">The full script is <code>Example.py</code> in the repository (run <code>python Example.py</code>); <code>SB user book.ipynb</code> walks through the derivation in more detail.</p>
+  </section>
+
+  <!-- ============================== FILES ============================== -->
+  <section id="files">
+    <h2><span lang="zh">仓库文件</span><span lang="en">Repository files</span></h2>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th><span lang="zh">文件</span><span lang="en">File</span></th><th><span lang="zh">说明</span><span lang="en">Description</span></th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>requirements.txt</code></td><td><span lang="zh">固定版本的 Python 依赖</span><span lang="en">Pinned Python dependencies</span></td></tr>
+          <tr><td><code>install package.ipynb</code></td><td><span lang="zh">在 Jupyter 中一步步安装依赖</span><span lang="en">Step-by-step dependency install inside Jupyter</span></td></tr>
+          <tr><td><code>SB user book.ipynb</code></td><td><span lang="zh">使用手册：安装步骤 + 例子与推导</span><span lang="en">User book: install steps plus worked examples</span></td></tr>
+          <tr><td><code>Example.py</code></td><td><span lang="zh">可直接运行的示例脚本</span><span lang="en">Ready-to-run example script</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ============================== FAQ ============================== -->
+  <section id="faq">
+    <h2><span lang="zh">常见问题</span><span lang="en">Troubleshooting</span></h2>
+
+    <details>
+      <summary><span lang="zh"><code>torch.cuda.is_available()</code> 返回 False</span><span lang="en"><code>torch.cuda.is_available()</code> returns False</span></summary>
+      <p lang="zh">1. 运行 <code>nvidia-smi</code>，确认能看到显卡，且驱动版本 ≥ 520。<br>2. 运行 <code>python -c "import torch; print(torch.__version__)"</code>，版本号应以 <code>+cu118</code> 结尾。如果是 <code>+cpu</code> 或者没有后缀，请重新执行第 3 步。<br>3. 确认当前激活的是 <code>gpu-q</code> 环境（Jupyter 中要选择对应的内核）。</p>
+      <p lang="en">1. Run <code>nvidia-smi</code> and make sure the GPU is listed with driver version ≥ 520.<br>2. Run <code>python -c "import torch; print(torch.__version__)"</code> — the version should end with <code>+cu118</code>. If it ends with <code>+cpu</code> or has no suffix, redo step 3.<br>3. Make sure the <code>gpu-q</code> environment is active (in Jupyter, select the matching kernel).</p>
+    </details>
+
+    <details>
+      <summary><span lang="zh">没有 NVIDIA 显卡可以用吗？</span><span lang="en">Can I use it without an NVIDIA GPU?</span></summary>
+      <p lang="zh">可以。跳过第 3 步，代码里不要传 <code>device="cuda"</code>（或改为 <code>device="cpu"</code>）。CPU 上同样能得到结果，只是规模大时速度较慢。</p>
+      <p lang="en">Yes. Skip step 3 and don't pass <code>device="cuda"</code> (or pass <code>device="cpu"</code>). You get the same results on CPU, just slower for large problems.</p>
+    </details>
+
+    <details>
+      <summary><span lang="zh">在 Jupyter 中装完包后导入的还是旧版本</span><span lang="en">Jupyter still imports the old package version</span></summary>
+      <p lang="zh">pip 装完后必须重启内核（Kernel → Restart），已加载的模块不会自动更新。</p>
+      <p lang="en">Restart the kernel (Kernel → Restart) after installing — modules that are already loaded aren't reloaded automatically.</p>
+    </details>
+
+    <details>
+      <summary><span lang="zh">每次结果不完全一样？</span><span lang="en">Why do results differ between runs?</span></summary>
+      <p lang="zh">Simulated Bifurcation 是带随机初始化的启发式算法，不保证每次都得到全局最优，不同次运行的结果可能不同。对结果要求高时，可以多运行几次取最好的一次，或用 <code>best_only=False</code> 查看所有 agents 的结果。</p>
+      <p lang="en">Simulated Bifurcation is a heuristic with random initialization: it does not guarantee the global optimum, and results can vary between runs. When the result matters, run it several times and keep the best, or pass <code>best_only=False</code> to inspect every agent's result.</p>
+    </details>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <ul>
+      <li><a href="https://github.com/djzts/GPU_acced_Q">GPU_acced_Q on GitHub</a></li>
+      <li><a href="https://github.com/bqth29/simulated-bifurcation-algorithm">simulated-bifurcation</a></li>
+      <li><a href="https://pytorch.org/get-started/locally/">PyTorch</a></li>
+    </ul>
+  </div>
+</footer>
+
+<script>
+(function () {
+  var root = document.documentElement;
+  var KEY = "gpu_acced_q_lang";
+
+  function setLang(lang) {
+    root.setAttribute("data-lang", lang);
+    root.setAttribute("lang", lang === "zh" ? "zh-CN" : "en");
+    document.querySelectorAll("[data-set-lang]").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b.getAttribute("data-set-lang") === lang));
+    });
+  }
+
+  var saved = null;
+  try { saved = localStorage.getItem(KEY); } catch (e) {}
+  var fromUrl = new URLSearchParams(location.search).get("lang");
+  var initial = fromUrl || saved || (/^zh/i.test(navigator.language || "") ? "zh" : "en");
+  setLang(initial === "en" ? "en" : "zh");
+
+  document.querySelectorAll("[data-set-lang]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      var lang = b.getAttribute("data-set-lang");
+      setLang(lang);
+      try { localStorage.setItem(KEY, lang); } catch (e) {}
+    });
+  });
+
+  // copy buttons on command / code blocks (not on output blocks)
+  document.querySelectorAll(".code:not(.output)").forEach(function (block) {
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "copy";
+    btn.innerHTML = '<span lang="zh">复制</span><span lang="en">Copy</span>';
+    btn.addEventListener("click", function () {
+      var text = block.querySelector("pre").innerText;
+      var done = function () {
+        btn.classList.add("done");
+        btn.innerHTML = '<span lang="zh">已复制</span><span lang="en">Copied</span>';
+        setTimeout(function () {
+          btn.classList.remove("done");
+          btn.innerHTML = '<span lang="zh">复制</span><span lang="en">Copy</span>';
+        }, 1500);
+      };
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(done);
+      } else {
+        var ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand("copy"); done(); } catch (e) {}
+        document.body.removeChild(ta);
+      }
+    });
+    block.appendChild(btn);
+  });
+})();
+</script>
+</body>
+</html>
